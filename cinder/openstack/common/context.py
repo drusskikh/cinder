@@ -40,7 +40,8 @@ class RequestContext(object):
     """
 
     def __init__(self, auth_token=None, user=None, tenant=None, is_admin=False,
-                 read_only=False, show_deleted=False, request_id=None):
+                 read_only=False, show_deleted=False, request_id=None,
+                 service_catalog=None):
         self.auth_token = auth_token
         self.user = user
         self.tenant = tenant
@@ -50,6 +51,7 @@ class RequestContext(object):
         if not request_id:
             request_id = generate_request_id()
         self.request_id = request_id
+        self.service_catalog = service_catalog
 
     def to_dict(self):
         return {'user': self.user,
@@ -58,7 +60,8 @@ class RequestContext(object):
                 'read_only': self.read_only,
                 'show_deleted': self.show_deleted,
                 'auth_token': self.auth_token,
-                'request_id': self.request_id}
+                'request_id': self.request_id,
+                'service_catalog': self.service_catalog}
 
 
 def get_admin_context(show_deleted="no"):

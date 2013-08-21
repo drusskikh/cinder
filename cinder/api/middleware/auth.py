@@ -20,6 +20,7 @@ Common Auth Middleware.
 """
 
 
+import json
 import os
 
 from oslo.config import cfg
@@ -96,6 +97,9 @@ class CinderKeystoneContext(base_wsgi.Middleware):
         auth_token = req.headers.get('X_AUTH_TOKEN',
                                      req.headers.get('X_STORAGE_TOKEN'))
 
+        # Get service catalog
+        service_catalog = json.loads(req.headers.get('X-Service-Catalog'))
+
         # Build a context, including the auth_token...
         remote_address = req.remote_addr
         if CONF.use_forwarded_for:
@@ -105,7 +109,8 @@ class CinderKeystoneContext(base_wsgi.Middleware):
                                      project_name=project_name,
                                      roles=roles,
                                      auth_token=auth_token,
-                                     remote_address=remote_address)
+                                     remote_address=remote_address,
+                                     service_catalog=service_catalog)
 
         req.environ['cinder.context'] = ctx
         return self.application

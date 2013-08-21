@@ -45,7 +45,8 @@ class RequestContext(object):
     def __init__(self, user_id, project_id, is_admin=None, read_deleted="no",
                  roles=None, project_name=None, remote_address=None,
                  timestamp=None, request_id=None, auth_token=None,
-                 overwrite=True, quota_class=None, **kwargs):
+                 overwrite=True, quota_class=None, service_catalog=None,
+                 **kwargs):
         """
         :param read_deleted: 'no' indicates deleted records are hidden, 'yes'
             indicates deleted records are visible, 'only' indicates that
@@ -84,6 +85,7 @@ class RequestContext(object):
         self.quota_class = quota_class
         if overwrite or not hasattr(local.store, 'context'):
             self.update_store()
+        self.service_catalog = service_catalog
 
     def _get_read_deleted(self):
         return self._read_deleted
@@ -116,7 +118,8 @@ class RequestContext(object):
                 'auth_token': self.auth_token,
                 'quota_class': self.quota_class,
                 'tenant': self.tenant,
-                'user': self.user}
+                'user': self.user,
+                'service_catalog': self.service_catalog}
 
     @classmethod
     def from_dict(cls, values):

@@ -64,6 +64,8 @@ CONF = cfg.CONF
 CONF.register_opts(quota_opts)
 
 
+
+
 class DbQuotaDriver(object):
     """
     Driver to perform necessary checks to enforce quotas and obtain
@@ -411,6 +413,54 @@ class DbQuotaDriver(object):
         """
 
         db.reservation_expire(context)
+
+
+class KeystoneQuotaDriver(DbQuotaDriver):
+
+    def get_project_quotas(self, context, resources, project_id,
+                           quota_class=None, defaults=True,
+                           usages=True):
+        """
+        Given a list of resources, retrieve the quotas for the given
+        project.
+
+        :param context: The request context, for access checks.
+        :param resources: A dictionary of the registered resources.
+        :param project_id: The ID of the project to return quotas for.
+        :param quota_class: If project_id != context.project_id, the
+                            quota class cannot be determined.  This
+                            parameter allows it to be specified.  It
+                            will be ignored if project_id ==
+                            context.project_id.
+        :param defaults: If True, the quota class value (or the
+                         default value, if there is no value from the
+                         quota class) will be reported if there is no
+                         specific value for the resource.
+        :param usages: If True, the current in_use and reserved counts
+                       will also be returned.
+        """
+
+        from keystoneclient import v3 as cli_v3
+
+        url = None
+        for service in context.service_catalog:
+            if service['type'] == 'identity':
+                endpoints = service['endpoints']
+                for endpoint in endpoints:
+                    if endpoint['region'] == 'RegionOne':
+                        url = endpoint.get('publicURL')
+        token = context.auth_token
+
+        cli = cli_v3.Client(endpoint=url, token=token)
+        project_quotas = cli.quotas.list_project_quotas(context.project_id)
+
+        quotas = {}
+        for project_quota in project_quotas:
+            resource_name = project_quota.resource['name'].split('.')[-1]
+            if resource_name in resources.keys():
+                quotas[resource_name] = {'limit': project_quota.limit}
+
+        return quotas
 
 
 class BaseResource(object):
